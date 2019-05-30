@@ -17,6 +17,7 @@ optional arguments:
                         GeL participant ID for proband
 """
 
+import sys
 import argparse
 from pyCIPAPI.interpretation_requests import get_interpretation_request_json
 # Import InterpretedGenome from GeLReportModels v6.0
@@ -55,15 +56,20 @@ def group_vars_by_cip(interpreted_genomes_json):
         ig_obj = InterpretedGenome.fromJsonDict(ig['interpreted_genome_data'])
         # cip provider stored in the interpretationService field.
         # Store the list of reported variants for that cip
+        cip = ig_obj.interpretationService.lower()
+        cip_version = int(ig['cip_version'])
+        # If cip not already in dictionary, add it in with an empty dictionary as value
+        vars_by_cip[cip] = vars_by_cip.setdefault(cip, {})
+        # If CIP is present multiple times each should have it's own version number
+        # However do a quick test to make sure this is true and error out if not
+        if cip_version in vars_by_cip[cip]:
+            sys.exit(f"Multiple interpreted genomes with version number '{cip_version}' for interpretation service '{cip}'")
+        # If there are variants, add the variant list for that cip/version to dictionary.
         if ig_obj.variants:
-            cip = ig_obj.interpretationService.lower()
-            cip_version = int(ig['cip_version'])
-            # If cip not already in dictionary, add it in with an empty dictionary as value
-            vars_by_cip[cip] = vars_by_cip.setdefault(cip, {})
-            # Add the variants for that cip/version to dictionary.
-            # If the same cip/version is already there (shouldn't ever happen but just a failsafe)
-            # append to the existing list instead of overwriting.
-            vars_by_cip[cip][cip_version] = vars_by_cip[cip].setdefault(cip_version, []) + ig_obj.variants
+            vars_by_cip[cip][cip_version] = ig_obj.variants
+        # If there aren't any variants just store empty list
+        else:
+            vars_by_cip[cip][cip_version] = []
     return vars_by_cip
 
 
