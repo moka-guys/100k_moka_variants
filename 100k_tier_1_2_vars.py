@@ -19,6 +19,8 @@ optional arguments:
 
 import sys
 import argparse
+# Append JellyPy to python path, needed when running via paramiko from Windows
+sys.path.append('/home/mokaguys/Apps/JellyPy')
 from pyCIPAPI.interpretation_requests import get_interpretation_request_json
 # Import InterpretedGenome from GeLReportModels v6.0
 from protocols.reports_6_0_0 import InterpretedGenome
