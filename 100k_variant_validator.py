@@ -100,17 +100,17 @@ class Variant(object):
                     gene = tx['gene_symbol']
                 # Capture the transcript name from start of HGVS
                 transcript = tx['hgvs_transcript_variant'].split(':')[0]
-                # Capture c. HGVS following colon in HGVS
-                hgvsc = tx['hgvs_transcript_variant'].split(':')[1]
+                # Capture transcript HGVS minus the accession prefix e.g NM_153240.4:c.3762_3764dup would become c.3762_3764dup
+                hgvst = tx['hgvs_transcript_variant'].split(':')[1]
                 # If there's protein HGVS, capture the p. nomenclature single letter representation (slr).
                 hgvsp = ''
                 if tx['hgvs_predicted_protein_consequence']:
                     hgvsp_full = tx['hgvs_predicted_protein_consequence']['slr']
-                    # Remove the NP protein prefix, and parentheses to make consistent with Ingenuity exported VCF
+                    # Remove the NP protein accession prefix, and parentheses to make consistent with Ingenuity exported VCF
                     # i.e. NP_000079.2:p.(G197C) would become p.G197C
                     hgvsp = hgvsp_full.split(':')[1].replace('(', '').replace(')', '')
                 # Store as dictionary in self.transcripts list
-                self.transcripts.append({'gene': gene, 'transcript': transcript, 'hgvsc': hgvsc, 'hgvsp': hgvsp})
+                self.transcripts.append({'gene': gene, 'transcript': transcript, 'hgvst': hgvst, 'hgvsp': hgvsp})
         # Some cases can't be lifted over, but check that there is at least a section for one of the two builds
         if 'grch37' and 'grch38' not in var_json['primary_assembly_loci']:
             sys.exit('No coordinates for GRCh37 or GRCh38')
@@ -145,10 +145,10 @@ def main():
         args.alt
     )
     # Format transcript level information into a list of semi-colon separated strings
-    tx_strs = [f"{tx['gene']};{tx['transcript']};{tx['hgvsc']};{tx['hgvsp']}" for tx in v.transcripts]
+    tx_strs = [f"{tx['gene']};{tx['transcript']};{tx['hgvst']};{tx['hgvsp']}" for tx in v.transcripts]
     # Print the transcript info to stdout as a tab-separated string
     # Transcript strings are joined using commas and printed in the final field
-    print(f"{v.chr37}\t{v.pos37}\t{v.ref37}\t{v.alt37}\t{v.chr38}\t{v.pos38}\t{v.ref38}\t{v.alt38}\t{','.join(tx_strs)}")
+    print(f"{v.chr37}\t{v.pos37}\t{v.ref37}\t{v.alt37}\t{v.chr38}\t{v.pos38}\t{v.ref38}\t{v.alt38}\t{','.join(tx_strs)}\t{v.var_val_version}")
 
 
 if __name__ == '__main__':
