@@ -113,7 +113,7 @@ class Variant(object):
                 self.transcripts.append({'gene': gene, 'transcript': transcript, 'hgvst': hgvst, 'hgvsp': hgvsp})
         # Some cases can't be lifted over, but check that there is at least a section for one of the two builds
         if 'grch37' and 'grch38' not in var_json['primary_assembly_loci']:
-            sys.exit('No coordinates for GRCh37 or GRCh38')
+            sys.exit('Missing coordinates for GRCh37 and GRCh38')
         # Capture b37 and b38 details
         if 'grch37' in var_json['primary_assembly_loci']:
             grch37_vcf = var_json['primary_assembly_loci']['grch37']['vcf']
