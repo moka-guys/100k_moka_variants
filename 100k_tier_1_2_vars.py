@@ -162,21 +162,20 @@ def zygosity_to_vcf(gel_zygosity):
 def get_ir_json(ir_id, ir_version):
     """
     Get the interpretation request JSON for a case and return as a python json dictionary like object
-    For speed this function will use a local cached json rather than downloading a fresh copy, provided 
+    For speed this function will use a local cached json rather than downloading a fresh copy, provided
     the last_modified timestamp matches that found in the interpretation request list endpoint
     Args:
 
     """
-    local_cache = config.get("MOKA", "SERVER")
     # Get list of local JSON file names (pulled using GeL2MDT)
     local_jsons = ';'.join(glob.glob('{local_cache}/{ir_id}-{ir_version}-*.json'.format(
             local_cache=config.get("GEL2MDT", "CIP-API-CACHE"),
-            ir_id=ir_id, 
+            ir_id=ir_id,
             ir_version=ir_version
         )
     ))
     # GeL2MDT appends sequential version numbers to the end of the JSON each time a new copy is downloaded
-    # Capture the GeL2MDT version number from end of each JSON file name to find latest file 
+    # Capture the GeL2MDT version number from end of each JSON file name to find latest file
     versions = re.findall(r'{ir_id}-{ir_version}-(\d+).json'.format(ir_id=ir_id, ir_version=ir_version), local_jsons)
     # If there's no local cache files, or filenames don't match expected format, versions will be an empty list so skip next block
     if versions:
@@ -184,8 +183,8 @@ def get_ir_json(ir_id, ir_version):
         max_version = max(list(map(int, versions)))
         latest_cache_path = '{local_cache}/{ir_id}-{ir_version}-{max_version}.json'.format(
                 local_cache=config.get("GEL2MDT", "CIP-API-CACHE"),
-                ir_id=ir_id, 
-                ir_version=ir_version, 
+                ir_id=ir_id,
+                ir_version=ir_version,
                 max_version=max_version
             )
         # Read into a JSON object
@@ -204,9 +203,8 @@ def get_ir_json(ir_id, ir_version):
             return ir_json
     # If there is no local cache, or it's out of date, download a new JSON from CIP-API and return
     return get_interpretation_request_json(ir_id, ir_version, reports_v6=True)
-    
 
-    
+
 def main():
     # Return arguments
     args = process_arguments()
