@@ -190,7 +190,7 @@ def get_ir_json(ir_id, ir_version):
         # Read into a JSON object
         with open(latest_cache_path, 'r') as cache_json:
             ir_json = json.load(cache_json)
-        # Get overview of case form interpretation request list endpoint (this is much faster than pulling the full JSON)
+        # Get overview of case from interpretation request list endpoint (this is much faster than pulling the full JSON)
         ir_list = get_interpretation_request_list(interpretation_request_id=ir_id, version=ir_version)
         # Check that this only returns one result
         if len(ir_list) != 1:
