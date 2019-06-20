@@ -165,7 +165,10 @@ def get_ir_json(ir_id, ir_version):
     For speed this function will use a local cached json rather than downloading a fresh copy, provided
     the last_modified timestamp matches that found in the interpretation request list endpoint
     Args:
-
+        ir_id: 100KGP interpretation request id without cip prefix or version suffix e.g. 12345 for case SAP-12345-1
+        ir_version: 100KGP interpretation request version e.g. 1 for case SAP-12345-1
+    Returns:
+        interpretation request as python dictionary-like json object
     """
     # Get list of local JSON file names (pulled using GeL2MDT)
     local_jsons = ';'.join(glob.glob('{local_cache}/{ir_id}-{ir_version}-*.json'.format(
