@@ -213,6 +213,8 @@ def main():
     args = process_arguments()
     # Pull out interpretation request JSON
     ir_json = get_ir_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1])
+    # Capture the genome assembly
+    assembly = ir_json.get('assembly')
     # Group variants by tier
     tiered_vars = get_tiered_vars(ir_json)
     # Loop through tier 1 and tier 2 variants
@@ -223,10 +225,11 @@ def main():
             if variant_call.participantId == args.proband_id:
                 # Capture proband genotype and convert to VCF format
                 gt = zygosity_to_vcf(variant_call.zygosity)
-        # The other details needed are stored in 'variantCoordinates'
+        # The other details needed are stored in 'variantCoordinates' 
+        # NOTE the assembly recorded in variantCoordinates is often wrong (!!!) so don't use, see GEL-42665
         # Print variant details in tab separated list to stdout
         vc = var.variantCoordinates
-        print(f"{vc.assembly}\t{vc.chromosome}\t{vc.position}\t{vc.reference}\t{vc.alternate}\t{gt}")
+        print(f"{assembly}\t{vc.chromosome}\t{vc.position}\t{vc.reference}\t{vc.alternate}\t{gt}")
 
 if __name__ == '__main__':
     main()
