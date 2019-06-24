@@ -128,6 +128,7 @@ class Variant(object):
                         self.alt37 = grch37_vcf['alt']
                 # Capture b38 coordinates
                 if 'grch38' in tx['primary_assembly_loci']:
+                    grch38_vcf = tx['primary_assembly_loci']['grch38']['vcf']
                     # if we've already captured the coordinates from a previous transcript, check they match, if they don't set ambiguous flag to True
                     if self.chr38 or self.pos38 or self.ref38 or self.alt38:
                         if not (
