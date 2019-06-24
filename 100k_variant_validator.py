@@ -90,10 +90,42 @@ class Variant(object):
         elif r.json()['flag'] == 'gene_variant':
             # For variants that map to a transcript, store the json for each transcript in a list
             transcript_data = [r.json()[key] for key in r.json().keys() if key not in ['flag', 'metadata']]
-            # We only need one of these to get the b37 + b38 coords, ref and alt, so capture the first from the list
-            var_json = transcript_data[0]
             # Loop through each transcript JSON, extract relevant fields and store in list of dictionaries
             for tx in transcript_data:
+                # Capture b37 coordinates
+                if 'grch37' in tx['primary_assembly_loci']:
+                    grch37_vcf = tx['primary_assembly_loci']['grch37']['vcf']
+                    # if we've already captured the coordinates from a previous transcript, check they match
+                    if self.chr37 or self.pos37 or self.ref37 or self.alt37:
+                        assert(
+                            self.chr37 == grch37_vcf['chr']
+                            and self.pos37 == grch37_vcf['pos']
+                            and self.ref37 == grch37_vcf['ref']
+                            and self.alt37 == grch37_vcf['alt']
+                            ), "Mismatch between transcripts for build 37 coordinates"
+                    # if we haven't captured the coordinates yet, capture them
+                    else:
+                        self.chr37 = grch37_vcf['chr']
+                        self.pos37 = grch37_vcf['pos']
+                        self.ref37 = grch37_vcf['ref']
+                        self.alt37 = grch37_vcf['alt']
+                # Capture b38 coordinates
+                if 'grch38' in tx['primary_assembly_loci']:
+                    grch38_vcf = tx['primary_assembly_loci']['grch38']['vcf']
+                    # if we've already captured the coordinates from a previous transcript, check they match
+                    if self.chr38 or self.pos38 or self.ref38 or self.alt38:
+                        assert(
+                            self.chr38 == grch38_vcf['chr']
+                            and self.pos38 == grch38_vcf['pos']
+                            and self.ref38 == grch38_vcf['ref']
+                            and self.alt38 == grch38_vcf['alt']
+                            ), "Mismatch between transcripts for build 38 coordinates"
+                    # if we haven't captured the coordinates yet, capture them
+                    else:
+                        self.chr38 = grch38_vcf['chr']
+                        self.pos38 = grch38_vcf['pos']
+                        self.ref38 = grch38_vcf['ref']
+                        self.alt38 = grch38_vcf['alt']
                 # If there's a gene symbol, capture it
                 gene = ''
                 if tx['gene_symbol']:
@@ -112,21 +144,8 @@ class Variant(object):
                 # Store as dictionary in self.transcripts list
                 self.transcripts.append({'gene': gene, 'transcript': transcript, 'hgvst': hgvst, 'hgvsp': hgvsp})
         # Some cases can't be lifted over, but check that there is at least a section for one of the two builds
-        if 'grch37' and 'grch38' not in var_json['primary_assembly_loci']:
-            sys.exit('Missing coordinates for GRCh37 and GRCh38')
-        # Capture b37 and b38 details
-        if 'grch37' in var_json['primary_assembly_loci']:
-            grch37_vcf = var_json['primary_assembly_loci']['grch37']['vcf']
-            self.chr37 = grch37_vcf['chr']
-            self.pos37 = grch37_vcf['pos']
-            self.ref37 = grch37_vcf['ref']
-            self.alt37 = grch37_vcf['alt']
-        if 'grch38' in var_json['primary_assembly_loci']:
-            grch38_vcf = var_json['primary_assembly_loci']['grch38']['vcf']
-            self.chr38 = grch38_vcf['chr']
-            self.pos38 = grch38_vcf['pos']
-            self.ref38 = grch38_vcf['ref']
-            self.alt38 = grch38_vcf['alt']
+        if not self.pos37 and not self.pos38:
+            sys.exit('Missing coordinates for both GRCh37 and GRCh38')
         # Record the variant validator version
         self.var_val_version = r.json()['metadata']['variantvalidator_version']
         # Check this is correct, is NP accession not stored anywhere? Definitely don't need parentheses?
