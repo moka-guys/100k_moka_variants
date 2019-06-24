@@ -69,6 +69,8 @@ class Variant(object):
             ref: Reference bases(s)
             alt: Alternate base(s)
         """
+        ambiguous_37 = False
+        ambiguous_38 = False
         endpoint = f'https://rest.variantvalidator.org/variantvalidator/{build}/{chr}-{pos}-{ref}-{alt}/all'
         r = requests.get(endpoint)
         # Error if response code not 200
@@ -109,14 +111,15 @@ class Variant(object):
                 # Capture b37 coordinates
                 if 'grch37' in tx['primary_assembly_loci']:
                     grch37_vcf = tx['primary_assembly_loci']['grch37']['vcf']
-                    # if we've already captured the coordinates from a previous transcript, check they match
+                    # if we've already captured the coordinates from a previous transcript, check they match, if they don't set ambiguous flag to True
                     if self.chr37 or self.pos37 or self.ref37 or self.alt37:
-                        assert(
+                        if not (
                             self.chr37 == grch37_vcf['chr'] and
                             self.pos37 == grch37_vcf['pos'] and
                             self.ref37 == grch37_vcf['ref'] and
                             self.alt37 == grch37_vcf['alt']
-                            ), "Mismatch between transcripts for build 37 coordinates"
+                            ):
+                            ambiguous_37 = True
                     # if we haven't captured the coordinates yet, capture them
                     else:
                         self.chr37 = grch37_vcf['chr']
@@ -125,15 +128,15 @@ class Variant(object):
                         self.alt37 = grch37_vcf['alt']
                 # Capture b38 coordinates
                 if 'grch38' in tx['primary_assembly_loci']:
-                    grch38_vcf = tx['primary_assembly_loci']['grch38']['vcf']
-                    # if we've already captured the coordinates from a previous transcript, check they match
+                    # if we've already captured the coordinates from a previous transcript, check they match, if they don't set ambiguous flag to True
                     if self.chr38 or self.pos38 or self.ref38 or self.alt38:
-                        assert(
+                        if not (
                             self.chr38 == grch38_vcf['chr'] and
                             self.pos38 == grch38_vcf['pos'] and
                             self.ref38 == grch38_vcf['ref'] and
                             self.alt38 == grch38_vcf['alt']
-                            ), "Mismatch between transcripts for build 38 coordinates"
+                            ):
+                            ambiguous_38 = True
                     # if we haven't captured the coordinates yet, capture them
                     else:
                         self.chr38 = grch38_vcf['chr']
@@ -157,6 +160,17 @@ class Variant(object):
                     hgvsp = hgvsp_full.split(':')[1].replace('(', '').replace(')', '')
                 # Store as dictionary in self.transcripts list
                 self.transcripts.append({'gene': gene, 'transcript': transcript, 'hgvst': hgvst, 'hgvsp': hgvsp})
+        # If either sets of coordinates are ambiguous, set back to empty strings
+        if ambiguous_37:
+            self.chr37 = ''
+            self.pos37 = ''
+            self.ref37 = ''
+            self.alt37 = ''
+        if ambiguous_38:
+            self.chr38 = ''
+            self.pos38 = ''
+            self.ref38 = ''
+            self.alt38 = ''
         # Some cases can't be lifted over, but check that there is at least a section for one of the two builds
         if not self.pos37 and not self.pos38:
             sys.exit('Missing coordinates for both GRCh37 and GRCh38')
