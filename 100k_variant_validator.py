@@ -84,9 +84,23 @@ class Variant(object):
             # Author indicated the key will be made lower case in the future for consistency, so try both:
             # https://github.com/openvar/variantValidator/issues/57
             if 'Intergenic_Variant_1' in r.json():
-                var_json = r.json()['Intergenic_Variant_1']
+                loci_json = r.json()['Intergenic_Variant_1']['primary_assembly_loci']
             elif 'intergenic_variant_1' in r.json():
-                var_json = r.json()['intergenic_variant_1']
+                loci_json = r.json()['intergenic_variant_1']['primary_assembly_loci']
+            # Capture b37 coordinates
+            if 'grch37' in loci_json:
+                grch37_vcf = loci_json['grch37']['vcf']
+                self.chr37 = grch37_vcf['chr']
+                self.pos37 = grch37_vcf['pos']
+                self.ref37 = grch37_vcf['ref']
+                self.alt37 = grch37_vcf['alt']
+            # Capture b38 coordinates
+            if 'grch38' in loci_json:
+                grch38_vcf = loci_json['grch38']['vcf']
+                self.chr38 = grch38_vcf['chr']
+                self.pos38 = grch38_vcf['pos']
+                self.ref38 = grch38_vcf['ref']
+                self.alt38 = grch38_vcf['alt']
         elif r.json()['flag'] == 'gene_variant':
             # For variants that map to a transcript, store the json for each transcript in a list
             transcript_data = [r.json()[key] for key in r.json().keys() if key not in ['flag', 'metadata']]
@@ -98,10 +112,10 @@ class Variant(object):
                     # if we've already captured the coordinates from a previous transcript, check they match
                     if self.chr37 or self.pos37 or self.ref37 or self.alt37:
                         assert(
-                            self.chr37 == grch37_vcf['chr']
-                            and self.pos37 == grch37_vcf['pos']
-                            and self.ref37 == grch37_vcf['ref']
-                            and self.alt37 == grch37_vcf['alt']
+                            self.chr37 == grch37_vcf['chr'] and
+                            self.pos37 == grch37_vcf['pos'] and
+                            self.ref37 == grch37_vcf['ref'] and
+                            self.alt37 == grch37_vcf['alt']
                             ), "Mismatch between transcripts for build 37 coordinates"
                     # if we haven't captured the coordinates yet, capture them
                     else:
@@ -115,10 +129,10 @@ class Variant(object):
                     # if we've already captured the coordinates from a previous transcript, check they match
                     if self.chr38 or self.pos38 or self.ref38 or self.alt38:
                         assert(
-                            self.chr38 == grch38_vcf['chr']
-                            and self.pos38 == grch38_vcf['pos']
-                            and self.ref38 == grch38_vcf['ref']
-                            and self.alt38 == grch38_vcf['alt']
+                            self.chr38 == grch38_vcf['chr'] and
+                            self.pos38 == grch38_vcf['pos'] and
+                            self.ref38 == grch38_vcf['ref'] and
+                            self.alt38 == grch38_vcf['alt']
                             ), "Mismatch between transcripts for build 38 coordinates"
                     # if we haven't captured the coordinates yet, capture them
                     else:
