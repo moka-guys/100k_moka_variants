@@ -1,10 +1,6 @@
 #!/usr/bin/env python2
 """
 v1.0 - AB 2019/05/30
-Requirements:
-    Python 2.7
-    paramiko
-    pyodbc
 
 usage: 100k_variant_import.py [-h] --ir_id IR_ID --proband_id PROBAND_ID
                               --ngstest_id NGSTEST_ID --internal_pat_id

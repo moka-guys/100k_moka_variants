@@ -1,9 +1,6 @@
+#!/usr/bin/env python3
 """
 v1.0 - AB 2019/05/30
-Requirements:
-    Python 3.7
-    JellyPy
-    GeL Report Models (v6 or higher)
 
 usage: 100k_tier_1_2_vars.py [-h] -i IR_ID -p PROBAND_ID
 

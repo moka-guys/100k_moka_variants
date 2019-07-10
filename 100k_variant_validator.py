@@ -1,8 +1,6 @@
+#!/usr/bin/env python3
 """
 v1.0 - AB 2019/05/30
-Requirements:
-    Python 3.7
-    requests
 
 usage: 100k_variant_validator.py [-h] -b BUILD -c CHR -p POS -r REF -a ALT
 
