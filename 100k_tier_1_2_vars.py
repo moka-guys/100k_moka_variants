@@ -214,7 +214,7 @@ def main():
     # Pull out interpretation request JSON
     ir_json = get_ir_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1])
     # Capture the genome assembly
-    assembly = ir_json.get('assembly')
+    assembly = ir_json['assembly']
     # Group variants by tier
     tiered_vars = get_tiered_vars(ir_json)
     # Loop through tier 1 and tier 2 variants
