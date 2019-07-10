@@ -226,7 +226,8 @@ def main():
                 # Capture proband genotype and convert to VCF format
                 gt = zygosity_to_vcf(variant_call.zygosity)
         # The other details needed are stored in 'variantCoordinates' 
-        # NOTE the assembly recorded in variantCoordinates is often wrong (!!!) so don't use, see GEL-42665
+        # (Note that whilst assembly is also recorded in variantCoordinates, it can be incorrect!
+        # GeL advised to always capture the assembly from the top level of the JSON as done above)
         # Print variant details in tab separated list to stdout
         vc = var.variantCoordinates
         print(f"{assembly}\t{vc.chromosome}\t{vc.position}\t{vc.reference}\t{vc.alternate}\t{gt}")
