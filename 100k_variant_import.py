@@ -403,42 +403,21 @@ def patient_log(internal_pat_id, ir_id, var_val_version, num_imported, num_faile
             )
     moka_connection.execute(sql)
 
-def main():
-    # Return arguments
-    args = process_arguments()
-    print "Retrieving tier 1 and 2 variants from GeL (this may be slow)"
-    # Get tier 1/2 variants
-    variants = get_tier_1_2_vars(args.ir_id, args.proband_id)
-    variants_annotated = []
-    imported = []
-    failed_import = []
+def message_box(message, type):
+    Tkinter.Tk().withdraw()
+    if type == 'info':
+        tkMessageBox.showinfo("", message)
+    elif type == 'warning':
+        tkMessageBox.showwarning("", message)
+    elif type == 'error':
+        tkMessageBox.showerror("", message)
+    else:
+        raise ValueError("Type must be 'showinfo', 'showwarning' or 'error'")
 
+def add_to_moka(variants, ngstest_id, internal_pat_id, moka_connection):
+    imported = []
     skipped = []
-    # If there aren't any variants returned, display message and exit
-    if not variants:
-        print "Done"
-        Tkinter.Tk().withdraw()
-        tkMessageBox.showinfo(
-            "", "No tier 1 or 2 variants found for 100KGP case {ir_id}".format(
-                ir_id=args.ir_id)
-        )
-        return
-    # For each variant, get variant details
-    print 'Getting variant details from VariantValidator'
-    for variant in variants:
-        try:
-            variants_annotated.append(get_additional_info(variant))
-        except Exception:
-            failed_import.append(variant)
-    # Capture the version of variant validator used to annotate 
-    var_val_version = ''
-    if variants_annotated:
-        var_val_version = variants_annotated[0]['var_val_version']
-    # Insert each annotated variant to Moka
-    print 'Fetching test details from Moka'
-    mc = MokaConnector()
-    v = VariantAdder100KGP(args.ngstest_id, args.internal_pat_id, mc)
-    print 'Inserting variants to Moka'
+    v = VariantAdder100KGP(ngstest_id, internal_pat_id, moka_connection)
     for variant in variants_annotated:
         # Convert variant chromosome name to a Moka chromosome ID
         variant = v.chr_to_id(variant)
@@ -476,33 +455,66 @@ def main():
                 # Insert transcript to Moka
                 v.insert_transcript(ngs_variant_id, tx)
             # Record that variant has been imported
-            imported.append(variant['submitted_variant']) 
-            
+            imported.append(variant['submitted_variant'])
+        return imported, skipped, v.no_hgncid
+
+def summary_messages(skipped, failed, no_hgncid):
+    if skipped:
+        message_box(
+            "Skipped import for the following variants, they are already in Moka.\n\n{variants}".format(
+                    variants='\n'.join(['{build} chr{chr} {pos} {ref} {alt}'.format(**variant) for variant in skipped])
+            ),
+            'info'
+        )
+    if failed:
+        message_box(
+            "Import failed for following variants. Please add manually.\n\n{variants}".format(
+                variants='\n'.join(['{build} chr{chr} {pos} {ref} {alt}'.format(**variant) for variant in failed])
+            ),
+            'warning'
+        )
+    if no_hgncid:
+        message_box(
+            "Couldn't find HGNCIDs for the following genes, so didn't import annotations.\n\n{genes}".format(
+                genes='\n'.join([gene for gene in no_hgncid])
+            ),
+            'warning'
+        )
+
+def main():
+    variants_annotated = []
+    failed = []
+    # Return arguments
+    args = process_arguments()
+    print "Retrieving tier 1 and 2 variants from GeL (this may be slow)"
+    # Get tier 1/2 variants
+    variants = get_tier_1_2_vars(args.ir_id, args.proband_id)
+    # If there aren't any variants returned, display message and exit
+    if not variants:
+        print "Done"
+        message_box("No tier 1 or 2 variants found for 100KGP case {ir_id}".format(ir_id=args.ir_id), 'info')
+        return
+    # For each variant, get variant details
+    print 'Getting variant details from VariantValidator'
+    for variant in variants:
+        try:
+            variants_annotated.append(get_additional_info(variant))
+        except Exception:
+            failed.append(variant)
+    # Capture the version of variant validator used to annotate 
+    var_val_version = ''
+    if variants_annotated:
+        var_val_version = variants_annotated[0]['var_val_version']
+    # Insert each annotated variant to Moka
+    print 'Fetching test details from Moka'
+    mc = MokaConnector()
+    print 'Inserting variants to Moka'
+    imported, skipped, no_hgncid = add_to_moka(variants_annotated, args.ngstest_id, args.internal_pat_id, mc)      
     # Record in patient log.
-    patient_log(args.internal_pat_id, args.ir_id, var_val_version, len(imported), len(failed_import), len(skipped), mc)
+    patient_log(args.internal_pat_id, args.ir_id, var_val_version, len(imported), len(failed), len(skipped), mc)
     print "Done"
     # Report variants or genes that weren't/couldn't be imported
-    if skipped:
-        Tkinter.Tk().withdraw()
-        tkMessageBox.showinfo(
-            "", "Skipped import for the following variants, they are already in Moka.\n\n{variants}".format(
-                variants='\n'.join(['{build} chr{chr} {pos} {ref} {alt}'.format(**variant) for variant in skipped])
-                )
-            )
-    if failed_import:
-        Tkinter.Tk().withdraw()
-        tkMessageBox.showwarning(
-            "", "Import failed for following variants. Please add manually.\n\n{variants}".format(
-                variants='\n'.join(['{build} chr{chr} {pos} {ref} {alt}'.format(**variant) for variant in failed_import])
-                )
-            )
-    if v.no_hgncid:
-        Tkinter.Tk().withdraw()
-        tkMessageBox.showwarning(
-            "", "Couldn't find HGNCIDs for the following genes, so didn't import annotations.\n\n{genes}".format(
-                genes='\n'.join([gene for gene in v.no_hgncid])
-                )
-            )
+    summary_messages(skipped, failed, no_hgncid)
 
 
 if __name__ == '__main__':
