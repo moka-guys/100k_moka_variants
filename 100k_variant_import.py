@@ -414,7 +414,7 @@ def message_box(message, type):
     else:
         raise ValueError("Type must be 'showinfo', 'showwarning' or 'error'")
 
-def add_to_moka(variants, ngstest_id, internal_pat_id, moka_connection):
+def add_to_moka(variants_annotated, ngstest_id, internal_pat_id, moka_connection):
     imported = []
     skipped = []
     v = VariantAdder100KGP(ngstest_id, internal_pat_id, moka_connection)
@@ -456,7 +456,7 @@ def add_to_moka(variants, ngstest_id, internal_pat_id, moka_connection):
                 v.insert_transcript(ngs_variant_id, tx)
             # Record that variant has been imported
             imported.append(variant['submitted_variant'])
-        return imported, skipped, v.no_hgncid
+    return imported, skipped, v.no_hgncid
 
 def summary_messages(skipped, failed, no_hgncid):
     if skipped:
@@ -494,7 +494,7 @@ def main():
         print "Done"
         message_box("No tier 1 or 2 variants found for 100KGP case {ir_id}".format(ir_id=args.ir_id), 'info')
         return
-    # For each variant, get variant details
+    # For each variant, get variant details. If anything goes wrong, record in failed list.
     print 'Getting variant details from VariantValidator'
     for variant in variants:
         try:
@@ -506,14 +506,13 @@ def main():
     if variants_annotated:
         var_val_version = variants_annotated[0]['var_val_version']
     # Insert each annotated variant to Moka
-    print 'Fetching test details from Moka'
     mc = MokaConnector()
     print 'Inserting variants to Moka'
     imported, skipped, no_hgncid = add_to_moka(variants_annotated, args.ngstest_id, args.internal_pat_id, mc)      
     # Record in patient log.
     patient_log(args.internal_pat_id, args.ir_id, var_val_version, len(imported), len(failed), len(skipped), mc)
     print "Done"
-    # Report variants or genes that weren't/couldn't be imported
+    # Report any skipped/failed imports
     summary_messages(skipped, failed, no_hgncid)
 
 
