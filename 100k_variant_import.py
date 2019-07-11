@@ -197,14 +197,18 @@ class VariantAdder100KGP(object):
         return hgncid_lookup
 
     def empty_to_null(self, variant):
-        # Convert empty strings to Nulls for sql
+        """
+        Converts empty strings to Nulls for sql
+        """
         for field in variant.keys():
             if variant[field] == '':
                 variant[field] = 'Null'
         return variant
 
     def wrap_strings(self, variant, fields):
-        # Fields that are strings need surrounding quotes in the SQL unless they are Null
+        """
+        Wraps strings in supplied fields in quotes for SQL
+        """
         for field in fields:
             if variant[field] != 'Null':
                 variant[field] = "'{}'".format(variant[field])
@@ -405,6 +409,9 @@ def patient_log(internal_pat_id, ir_id, var_val_version, num_imported, num_faile
     moka_connection.execute(sql)
 
 def message_box(message, type):
+    """
+    Displays a message box
+    """
     Tkinter.Tk().withdraw()
     if type == 'info':
         tkMessageBox.showinfo("", message)
@@ -416,6 +423,9 @@ def message_box(message, type):
         raise ValueError("Type must be 'showinfo', 'showwarning' or 'error'")
 
 def add_to_moka(variants_annotated, ngstest_id, internal_pat_id, moka_connection):
+    """
+    Performs steps required to add variants to Moka
+    """
     imported = []
     skipped = []
     v = VariantAdder100KGP(ngstest_id, internal_pat_id, moka_connection)
@@ -460,6 +470,9 @@ def add_to_moka(variants_annotated, ngstest_id, internal_pat_id, moka_connection
     return imported, skipped, v.no_hgncid
 
 def summary_messages(skipped, failed, no_hgncid):
+    """
+    Displays summary messages for user at end of script
+    """
     if skipped:
         message_box(
             "Skipped import for the following variants, they are already in Moka.\n\n{variants}".format(
