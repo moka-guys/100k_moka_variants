@@ -152,7 +152,7 @@ class VariantAdder100KGP(object):
         ).format(gene=gene_symbol)
         results = self.mc.fetchall(sql)
         if len(results) != 1:
-            raise Exception("No HGNCID found for {gene_symbol}".format(gene_symbol=gene_symbol))
+            raise ValueError("No HGNCID found for {gene_symbol}".format(gene_symbol=gene_symbol))
         return results[0].HGNCID
 
     def chr_to_id(self, variant):
@@ -181,10 +181,11 @@ class VariantAdder100KGP(object):
         hgncid_lookup = {}
         for gene in genes:
             try:
-                hgncid = self.lookup_hgncid(gene)
-                hgncid_lookup[gene] = hgncid
-            except:
+                hgncid = self.lookup_hgncid(gene)               
+            except ValueError:
                 self.no_hgncid.append(gene)
+            else:
+                hgncid_lookup[gene] = hgncid
         return hgncid_lookup
 
     def add_gene_list(self, variant, hgncid_lookup):
@@ -427,7 +428,7 @@ def main():
     for variant in variants:
         try:
             variants_annotated.append(get_additional_info(variant))
-        except:
+        except Exception:
             failed_import.append(variant)
     # Capture the version of variant validator used to annotate 
     var_val_version = ''
