@@ -106,8 +106,8 @@ class Variant(object):
                         self.pos37 == grch37_vcf['pos'] and
                         self.ref37 == grch37_vcf['ref'] and
                         self.alt37 == grch37_vcf['alt']
-                        ):
-                        ambiguous_37 = True
+                            ):
+                                ambiguous_37 = True
                 # if we haven't captured the coordinates yet, capture them
                 else:
                     self.chr37 = grch37_vcf['chr']
@@ -124,8 +124,8 @@ class Variant(object):
                         self.pos38 == grch38_vcf['pos'] and
                         self.ref38 == grch38_vcf['ref'] and
                         self.alt38 == grch38_vcf['alt']
-                        ):
-                        ambiguous_38 = True
+                            ):
+                                ambiguous_38 = True
                 # if we haven't captured the coordinates yet, capture them
                 else:
                     self.chr38 = grch38_vcf['chr']
@@ -148,7 +148,7 @@ class Variant(object):
                 # i.e. NP_000079.2:p.(G197C) would become p.G197C
                 hgvsp = hgvsp_full.split(':')[1].replace('(', '').replace(')', '')
             # Store as dictionary in self.transcripts list
-            self.transcripts.append({'gene': gene, 'transcript': transcript, 'hgvst': hgvst, 'hgvsp': hgvsp}) 
+            self.transcripts.append({'gene': gene, 'transcript': transcript, 'hgvst': hgvst, 'hgvsp': hgvsp})
         # If either sets of coordinates are ambiguous, set back to empty strings
         if ambiguous_37:
             self.chr37 = ''

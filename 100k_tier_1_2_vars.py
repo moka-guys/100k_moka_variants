@@ -31,6 +31,7 @@ from protocols.reports_6_0_0 import InterpretedGenome
 config = ConfigParser()
 config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.ini"))
 
+
 def process_arguments():
     """
     Uses argparse module to define and handle command line input arguments and help menu
@@ -222,7 +223,7 @@ def main():
             if variant_call.participantId == args.proband_id:
                 # Capture proband genotype and convert to VCF format
                 gt = zygosity_to_vcf(variant_call.zygosity)
-        # The other details needed are stored in 'variantCoordinates' 
+        # The other details needed are stored in 'variantCoordinates'
         # (Note that whilst assembly is also recorded in variantCoordinates, it can be incorrect!
         # GeL advised to always capture the assembly from the top level of the JSON as done above)
         # Print variant details in tab separated list to stdout

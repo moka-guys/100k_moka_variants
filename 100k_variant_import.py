@@ -33,6 +33,7 @@ import pyodbc
 config = ConfigParser()
 config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.ini"))
 
+
 def process_arguments():
     """
     Uses argparse module to define and handle command line input arguments and help menu
@@ -56,7 +57,7 @@ class MokaConnector(object):
         self.cnxn = pyodbc.connect('DRIVER={{SQL Server}}; SERVER={server}; DATABASE={database};'.format(
             server=config.get("MOKA", "SERVER"),
             database=config.get("MOKA", "DATABASE")
-            ), 
+            ),
             autocommit=True
         )
         self.cursor = self.cnxn.cursor()
@@ -72,7 +73,6 @@ class MokaConnector(object):
         Execute SQL, without catching return values (INSERT, UPDATE etc.)
         """
         self.cursor.execute(sql)
-
 
     def fetchall(self, sql):
         """
@@ -125,9 +125,8 @@ class VariantAdder100KGP(object):
             if variant.position_38:
                 prev_vars.add(
                         ('GRCh38', str(variant.chr_id_38), str(variant.position_38), variant.ref_38, variant.alt_38)
-                    )         
+                    )
         return prev_vars
-
 
     def lookup_chr(self):
         """
@@ -139,7 +138,6 @@ class VariantAdder100KGP(object):
         for row in moka_chr_all:
             moka_chr[row.Chr] = str(row.ChrID)
         return moka_chr
-
 
     def lookup_hgncid(self, gene_symbol):
         """
@@ -169,7 +167,7 @@ class VariantAdder100KGP(object):
 
     def already_in_moka(self, variant):
         """
-        Checks if a variant has already been imported to Moka 
+        Checks if a variant has already been imported to Moka
         """
         if variant['pos37']:
             if ('GRCh37', variant['chr37'], variant['pos37'], variant['ref37'], variant['alt37']) in self.prev_vars:
@@ -186,11 +184,11 @@ class VariantAdder100KGP(object):
         # Capture list of gene symbols
         genes = set([tx['gene'] for tx in variant['transcript_annotations'] if tx['gene']])
         # Lookup HGNCIDs for each gene symbol in Moka and record result in dictionary
-        # If no HGNCID can be found in Moka, add this to no_hgncid list so it can be reported back to user at end  
+        # If no HGNCID can be found in Moka, add this to no_hgncid list so it can be reported back to user at end
         hgncid_lookup = {}
         for gene in genes:
             try:
-                hgncid = self.lookup_hgncid(gene)               
+                hgncid = self.lookup_hgncid(gene)
             except ValueError:
                 self.no_hgncid.append(gene)
             else:
@@ -257,7 +255,7 @@ class VariantAdder100KGP(object):
             "INSERT INTO NGSVariantAnnotations (NGSVariantID, HGNCID, GENE_SYMBOL, TRANSCRIPT_ID, HGVS_Transcript, HGVS_Protein) "
                     "VALUES ({NGSVariantID}, {HGNCID}, {GENE_SYMBOL}, {TRANSCRIPT_ID}, {HGVS_Transcript}, {HGVS_Protein})"
         ).format(
-            NGSVariantID=ngs_variant_id, 
+            NGSVariantID=ngs_variant_id,
             HGNCID=transcript['hgncid'],
             GENE_SYMBOL=transcript['gene'],
             TRANSCRIPT_ID=transcript['transcript'],
@@ -265,9 +263,8 @@ class VariantAdder100KGP(object):
             HGVS_Protein=transcript['hgvsp']
         )
         self.mc.execute(sql)
- 
 
-        
+
 def get_tier_1_2_vars(ir_id, proband_id):
     """
     Calls script on linux server to get tier 1 and 2 variants from cip-api
@@ -358,7 +355,7 @@ def get_additional_info(variant):
                     'hgvsp': tx_fields[3]
                 }
             )
-    # Return the above along with remaining annotations in a dictionary 
+    # Return the above along with remaining annotations in a dictionary
     return {
         'submitted_variant': variant,
         'chr37': fields[0],
@@ -375,11 +372,12 @@ def get_additional_info(variant):
         'var_val_version': fields[9]
     }
 
+
 def patient_log(internal_pat_id, ir_id, var_val_version, num_imported, num_failed, num_skipped, moka_connection):
     """
     Record in patient log that variants have been imported. Record number imported, failed and skipped, as well as the variant validator version.
     Args:
-        internal_pat_id: Moka InternalPatientID from Patients table 
+        internal_pat_id: Moka InternalPatientID from Patients table
         ir_id: interpretation request with version suffix, but without cip prefix (i.e. 12345-1 for 100KGP case SAP-12345-1)
         var_val_version: version of VariantValidator used to annotate (returned in get_additional_info() output)
         num_imported: Number of variants imported
@@ -389,7 +387,7 @@ def patient_log(internal_pat_id, ir_id, var_val_version, num_imported, num_faile
     """
     log_message = (
         "Imported 100KGP variants for case {ir_id} from interp-API. Annotated with VariantValidator {var_val_version}. "
-        "{num_imported} imported. {num_failed} failed import. {num_skipped} skipped (already imported)." 
+        "{num_imported} imported. {num_failed} failed import. {num_skipped} skipped (already imported)."
     ).format(
         ir_id=ir_id,
         var_val_version=var_val_version,
@@ -409,6 +407,7 @@ def patient_log(internal_pat_id, ir_id, var_val_version, num_imported, num_faile
             )
     moka_connection.execute(sql)
 
+
 def message_box(message, type):
     """
     Displays a message box
@@ -422,6 +421,7 @@ def message_box(message, type):
         tkMessageBox.showerror("", message)
     else:
         raise ValueError("Type must be 'showinfo', 'showwarning' or 'error'")
+
 
 def add_to_moka(variants_annotated, ngstest_id, internal_pat_id, moka_connection):
     """
@@ -445,8 +445,8 @@ def add_to_moka(variants_annotated, ngstest_id, internal_pat_id, moka_connection
             variant = v.empty_to_null(variant)
             # Wrap strings in quotes for SQL
             variant = v.wrap_strings(
-                variant, 
-                fields = ['ref37', 'alt37', 'ref38', 'alt38', 'gt38', 'gt37', 'concat_genes']
+                variant,
+                fields=['ref37', 'alt37', 'ref38', 'alt38', 'gt38', 'gt37', 'concat_genes']
                 )
             # Insert variant to Moka. Capture the NGSVariantID
             ngs_variant_id = v.insert_variant(variant)
@@ -458,17 +458,18 @@ def add_to_moka(variants_annotated, ngstest_id, internal_pat_id, moka_connection
                 except KeyError:
                     continue
                 # Convert empty strings to null for SQL
-                tx = v.empty_to_null(tx)      
+                tx = v.empty_to_null(tx)
                 # Fields that are strings need surrounding quotes in the SQL unless they are Null
                 tx = v.wrap_strings(
-                    tx, 
-                    fields = ['gene', 'transcript', 'hgvst', 'hgvsp', 'hgncid']
+                    tx,
+                    fields=['gene', 'transcript', 'hgvst', 'hgvsp', 'hgncid']
                     )
                 # Insert transcript to Moka
                 v.insert_transcript(ngs_variant_id, tx)
             # Record that variant has been imported
             imported.append(variant['submitted_variant'])
     return imported, skipped, v.no_hgncid
+
 
 def summary_messages(skipped, failed, no_hgncid):
     """
@@ -496,6 +497,7 @@ def summary_messages(skipped, failed, no_hgncid):
             'warning'
         )
 
+
 def main():
     variants_annotated = []
     failed = []
@@ -516,14 +518,14 @@ def main():
             variants_annotated.append(get_additional_info(variant))
         except Exception:
             failed.append(variant)
-    # Capture the version of variant validator used to annotate 
+    # Capture the version of variant validator used to annotate
     var_val_version = ''
     if variants_annotated:
         var_val_version = variants_annotated[0]['var_val_version']
     # Insert each annotated variant to Moka
     mc = MokaConnector()
     print 'Inserting variants to Moka'
-    imported, skipped, no_hgncid = add_to_moka(variants_annotated, args.ngstest_id, args.internal_pat_id, mc)      
+    imported, skipped, no_hgncid = add_to_moka(variants_annotated, args.ngstest_id, args.internal_pat_id, mc)
     # Record in patient log.
     patient_log(args.internal_pat_id, args.ir_id, var_val_version, len(imported), len(failed), len(skipped), mc)
     print "Done"
