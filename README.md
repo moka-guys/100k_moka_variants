@@ -114,7 +114,7 @@ Requirements:
 * paramiko
 * pyodbc
 
-The connection details for Moka  `config.ini` in the same directory of the script. See `example_config.ini` for format.
+The connection details for Moka are in `config.ini` in the same directory of the script. See `example_config.ini` for format.
 
 Run the script:
 

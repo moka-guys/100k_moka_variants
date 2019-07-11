@@ -46,7 +46,7 @@ class Variant(object):
     """
     def __init__(self):
         """
-        The fields below are populated from VariantValidator using the get_info method below.
+        The fields below should be populated from VariantValidator using the get_info method.
         """
         self.chr37 = ''
         self.pos37 = ''
