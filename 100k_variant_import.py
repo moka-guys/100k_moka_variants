@@ -157,9 +157,10 @@ class VariantAdder100KGP(object):
 
     def chr_to_id(self, variant):
         """
-        Convert chromosome names in variant dictionary to Moka chromosome IDs
+        Converts chromosome names in variant dictionary to Moka chromosome IDs
         """
         # Convert chromosomes to Moka chromosome IDs
+        # Do this for both build 37 and build 38 chromosome fields (or whichever one is present if liftover failed)
         if variant['chr37']:
             variant['chr37'] = self.moka_chr[variant['chr37']]
         if variant['chr38']:
@@ -344,9 +345,9 @@ def get_additional_info(variant):
         gt37 = variant['gt']
     # The transcript field contains details for each transcript returned from API
     # Store transcript annotations in list of dictionaries
-    # Separate the transcripts by splitting on comma, then capture the individual transcript annotations by splitting on semi-colon
     transcript_annotations = []
     if fields[8]:
+        # Separate the transcripts by splitting on comma, then capture the individual transcript annotations by splitting on semi-colon
         for tx in fields[8].split(','):
             tx_fields = tx.split(';')
             transcript_annotations.append(
