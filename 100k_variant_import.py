@@ -155,29 +155,28 @@ class VariantAdder100KGP(object):
             raise Exception("No HGNCID found for {gene_symbol}".format(gene_symbol=gene_symbol))
         return results[0].HGNCID
 
-
-    def insert_to_moka(self, variant):
+    def chr_to_id(self, variant):
         """
-        Insert variant to Moka
-        Args:
-            variant = dictionary in the format output from get_additional_info() function
-        Returns:
-            status string, indicating outcome of function (e.g. imported, skipped)
+        Convert chromosome names in variant dictionary to Moka chromosome IDs
+         
         """
         # Convert chromosomes to Moka chromosome IDs
         if variant['chr37']:
             variant['chr37'] = self.moka_chr[variant['chr37']]
         if variant['chr38']:
             variant['chr38'] = self.moka_chr[variant['chr38']]
-        # Check if this variant has already been added to avoid duplication. If it has exit the function returning status of 'skipped'
+        return variant
+
+    def already_in_moka(self, variant):
         if variant['pos37']:
             if ('GRCh37', variant['chr37'], variant['pos37'], variant['ref37'], variant['alt37']) in self.prev_vars:
-                return 'skipped'
+                return True
         if variant['pos38']:
             if ('GRCh38', variant['chr38'], variant['pos38'], variant['ref38'], variant['alt38']) in self.prev_vars:
-                return 'skipped'
-        # Create an HGNCID lookup dictionary for each gene in the transcript annotations
-        # Record any that can't be found in a list
+                return True
+        return False
+
+    def create_hgncid_lookup(self, variant):
         genes = set([tx['gene'] for tx in variant['transcript_annotations'] if tx['gene']])
         hgncid_lookup = {}
         for gene in genes:
@@ -186,20 +185,37 @@ class VariantAdder100KGP(object):
                 hgncid_lookup[gene] = hgncid
             except:
                 self.no_hgncid.append(gene)
-        # Create semi-colon concatenated list of genes for adding to NGSVariant table
+        return hgncid_lookup
+
+    def add_gene_list(self, variant, hgncid_lookup):
         if hgncid_lookup:
             variant['concat_genes'] = ';'.join(sorted(hgncid_lookup.keys()))
         else:
             variant['concat_genes'] = 'Null'
+        return variant
+
+    def empty_to_null(self, variant):
         # Convert empty strings to Nulls for sql
         for field in variant.keys():
             if variant[field] == '':
                 variant[field] = 'Null'
+        return variant
+
+    def wrap_strings(self, variant, fields):
         # Fields that are strings need surrounding quotes in the SQL unless they are Null
-        str_fields = ['ref37', 'alt37', 'ref38', 'alt38', 'gt38', 'gt37', 'concat_genes']
-        for field in str_fields:
+        for field in fields:
             if variant[field] != 'Null':
                 variant[field] = "'{}'".format(variant[field])
+        return variant
+
+    def insert_variant(self, variant):
+        """
+        Insert variant to Moka
+        Args:
+            variant = dictionary in the format output from get_additional_info() function
+        Returns:
+            status string, indicating outcome of function (e.g. imported, skipped)
+        """
         # Insert to NGSVariant table
         sql = (
             "INSERT INTO NGSVariant (NGSTestID, InternalPatientID, DateAdded, PanelType, PanelTypeName, Gene, "
@@ -225,39 +241,24 @@ class VariantAdder100KGP(object):
             genotype_38=variant['gt38']
         )
         self.mc.execute(sql)
-        # Capture the NGSVariantID for the record just inserted
-        ngs_variant_id = self.mc.fetchone("SELECT @@IDENTITY")[0]
-        # Next insert transcript annotations to the NGSVariantAnnotations table
-        for tx in variant['transcript_annotations']:
-            # Lookup HGNCID, if it's not there skip to next transcript
-            try:
-                tx['hgncid'] = hgncid_lookup[tx['gene']]
-            except KeyError:
-                continue
-            # Convert empty strings to Nulls for sql
-            for field in tx.keys():
-                if tx[field] == '':
-                    tx[field] = 'Null'            
-            # Fields that are strings need surrounding quotes in the SQL unless they are Null
-            str_fields = ['gene', 'transcript', 'hgvst', 'hgvsp', 'hgncid']
-            for field in str_fields:
-                if tx[field] != 'Null':
-                    tx[field] = "'{}'".format(tx[field])
-            # Insert to NGSVariantAnnotations table
-            sql = (
-                "INSERT INTO NGSVariantAnnotations (NGSVariantID, HGNCID, GENE_SYMBOL, TRANSCRIPT_ID, HGVS_Transcript, HGVS_Protein) "
-                       "VALUES ({NGSVariantID}, {HGNCID}, {GENE_SYMBOL}, {TRANSCRIPT_ID}, {HGVS_Transcript}, {HGVS_Protein})"
-            ).format(
-                NGSVariantID=ngs_variant_id, 
-                HGNCID=tx['hgncid'],
-                GENE_SYMBOL=tx['gene'],
-                TRANSCRIPT_ID=tx['transcript'],
-                HGVS_Transcript=tx['hgvst'],
-                HGVS_Protein=tx['hgvsp']
-            )
-            self.mc.execute(sql)
-        # Return status to show the variant has been imported
-        return 'imported'
+        # Return the NGSVariantID for the record just inserted
+        return self.mc.fetchone("SELECT @@IDENTITY")[0]
+
+    def insert_transcript(self, ngs_variant_id, transcript):
+        # Insert to NGSVariantAnnotations table
+        sql = (
+            "INSERT INTO NGSVariantAnnotations (NGSVariantID, HGNCID, GENE_SYMBOL, TRANSCRIPT_ID, HGVS_Transcript, HGVS_Protein) "
+                    "VALUES ({NGSVariantID}, {HGNCID}, {GENE_SYMBOL}, {TRANSCRIPT_ID}, {HGVS_Transcript}, {HGVS_Protein})"
+        ).format(
+            NGSVariantID=ngs_variant_id, 
+            HGNCID=transcript['hgncid'],
+            GENE_SYMBOL=transcript['gene'],
+            TRANSCRIPT_ID=transcript['transcript'],
+            HGVS_Transcript=transcript['hgvst'],
+            HGVS_Protein=transcript['hgvsp']
+        )
+        self.mc.execute(sql)
+ 
 
         
 def get_tier_1_2_vars(ir_id, proband_id):
@@ -381,7 +382,7 @@ def patient_log(internal_pat_id, ir_id, var_val_version, num_imported, num_faile
     """
     log_message = (
         "Imported 100KGP variants for case {ir_id} from interp-API. Annotated with VariantValidator {var_val_version}. "
-        "{num_imported} successfully imported. {num_failed} failed import. {num_skipped} skipped (already imported)." 
+        "{num_imported} imported. {num_failed} failed import. {num_skipped} skipped (already imported)." 
     ).format(
         ir_id=ir_id,
         var_val_version=var_val_version,
@@ -410,6 +411,7 @@ def main():
     variants_annotated = []
     imported = []
     failed_import = []
+
     skipped = []
     # If there aren't any variants returned, display message and exit
     if not variants:
@@ -437,17 +439,45 @@ def main():
     v = VariantAdder100KGP(args.ngstest_id, args.internal_pat_id, mc)
     print 'Inserting variants to Moka'
     for variant in variants_annotated:
-        try:
-            status = v.insert_to_moka(variant)
-            if status == 'skipped':
-                skipped.append(variant['submitted_variant'])
-            elif status == 'imported':
-                imported.append(variant['submitted_variant'])
-            else:
-                failed_import.append(variant['submitted_variant'])
-        except:
-            failed_import.append(variant['submitted_variant'])
-    # Record in patient log
+        # Convert variant chromosome name to a Moka chromosome ID
+        variant = v.chr_to_id(variant)
+        # Check if this variant has already been added to avoid duplication. If it has, skip.
+        if v.already_in_moka(variant):
+            skipped.append(variant['submitted_variant'])
+        else:
+            # Create an HGNCID lookup dictionary for each gene in the transcript annotations
+            hgncid_lookup = v.create_hgncid_lookup(variant)
+            # Add the concatenated gene list to the variant dictionary
+            variant = v.add_gene_list(variant, hgncid_lookup)
+            # Convert empty strings to null for SQL
+            variant = v.empty_to_null(variant)
+            # Wrap strings in quotes for SQL
+            variant = v.wrap_strings(
+                variant, 
+                fields = ['ref37', 'alt37', 'ref38', 'alt38', 'gt38', 'gt37', 'concat_genes']
+                )
+            # Insert variant to Moka. Capture the NGSVariantID
+            ngs_variant_id = v.insert_variant(variant)
+            # Next insert transcript annotations to the NGSVariantAnnotations table
+            for tx in variant['transcript_annotations']:
+                # Lookup HGNCID, if it's not there skip to next transcript
+                try:
+                    tx['hgncid'] = hgncid_lookup[tx['gene']]
+                except KeyError:
+                    continue
+                # Convert empty strings to null for SQL
+                tx = v.empty_to_null(tx)      
+                # Fields that are strings need surrounding quotes in the SQL unless they are Null
+                tx = v.wrap_strings(
+                    tx, 
+                    fields = ['gene', 'transcript', 'hgvst', 'hgvsp', 'hgncid']
+                    )
+                # Insert transcript to Moka
+                v.insert_transcript(ngs_variant_id, tx)
+            # Record that variant has been imported
+            imported.append(variant['submitted_variant']) 
+            
+    # Record in patient log.
     patient_log(args.internal_pat_id, args.ir_id, var_val_version, len(imported), len(failed_import), len(skipped), mc)
     print "Done"
     # Report variants or genes that weren't/couldn't be imported
