@@ -158,7 +158,6 @@ class VariantAdder100KGP(object):
     def chr_to_id(self, variant):
         """
         Convert chromosome names in variant dictionary to Moka chromosome IDs
-         
         """
         # Convert chromosomes to Moka chromosome IDs
         if variant['chr37']:
@@ -168,6 +167,9 @@ class VariantAdder100KGP(object):
         return variant
 
     def already_in_moka(self, variant):
+        """
+        Checks if a variant has already been imported to Moka 
+        """
         if variant['pos37']:
             if ('GRCh37', variant['chr37'], variant['pos37'], variant['ref37'], variant['alt37']) in self.prev_vars:
                 return True
@@ -177,7 +179,13 @@ class VariantAdder100KGP(object):
         return False
 
     def create_hgncid_lookup(self, variant):
+        """
+        Creates an HGNCID lookup dictionary for any genes that overlap with the variant
+        """
+        # Capture list of gene symbols
         genes = set([tx['gene'] for tx in variant['transcript_annotations'] if tx['gene']])
+        # Lookup HGNCIDs for each gene symbol in Moka and record result in dictionary
+        # If no HGNCID can be found in Moka, add this to no_hgncid list so it can be reported back to user at end  
         hgncid_lookup = {}
         for gene in genes:
             try:
@@ -187,13 +195,6 @@ class VariantAdder100KGP(object):
             else:
                 hgncid_lookup[gene] = hgncid
         return hgncid_lookup
-
-    def add_gene_list(self, variant, hgncid_lookup):
-        if hgncid_lookup:
-            variant['concat_genes'] = ';'.join(sorted(hgncid_lookup.keys()))
-        else:
-            variant['concat_genes'] = 'Null'
-        return variant
 
     def empty_to_null(self, variant):
         # Convert empty strings to Nulls for sql
@@ -428,7 +429,7 @@ def add_to_moka(variants_annotated, ngstest_id, internal_pat_id, moka_connection
             # Create an HGNCID lookup dictionary for each gene in the transcript annotations
             hgncid_lookup = v.create_hgncid_lookup(variant)
             # Add the concatenated gene list to the variant dictionary
-            variant = v.add_gene_list(variant, hgncid_lookup)
+            variant['concat_genes'] = ';'.join(sorted(hgncid_lookup.keys()))
             # Convert empty strings to null for SQL
             variant = v.empty_to_null(variant)
             # Wrap strings in quotes for SQL
