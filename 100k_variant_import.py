@@ -412,7 +412,11 @@ def message_box(message, type):
     """
     Displays a message box
     """
-    Tkinter.Tk().withdraw()
+    # Create root window, hide it (because messagebox is separate window), and bring to top
+    root = Tkinter.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    # Display messagebox
     if type == 'info':
         tkMessageBox.showinfo("", message)
     elif type == 'warning':
