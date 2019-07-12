@@ -97,3 +97,40 @@ Arguments:
   -r REF, --ref REF     Reference base(s)
   -a ALT, --alt ALT     Alternate base(s)
 ```
+
+## 100k_variant_import.py 
+
+This script acts as a wrapper for `100k_tier_1_2_vars.py ` and `100k_variant_validator.py`, and inserts the variants into the Moka database.
+
+It is designed to be called from the Moka UI.
+
+### Usage
+
+This script requires access to Moka so must be run from a trust Windows desktop with access to `\\gstt.local\apps\Moka\Files\Software\`. It uses the [`ssh_n_run.py`](https://github.com/moka-guys/ssh_to_genapp) script to run code remotely on the trust linux server.
+
+Requirements:
+
+* Python 2.7
+* paramiko
+* pyodbc
+
+The connection details for Moka are in `config.ini` in the same directory of the script. See `example_config.ini` for format.
+
+Run the script:
+
+```
+python 100k_variant_import.py [-h] --ir_id IR_ID --proband_id PROBAND_ID
+                              --ngstest_id NGSTEST_ID --internal_pat_id
+                              INTERNAL_PAT_ID
+```
+
+Arguments:
+```
+  --ir_id IR_ID         GeL Interpretation Request ID in format 12345-1
+  --proband_id PROBAND_ID
+                        GeL participant ID for proband
+  --ngstest_id NGSTEST_ID
+                        Moka NGSTestID
+  --internal_pat_id INTERNAL_PAT_ID
+                        Moka InternalPatientID
+```

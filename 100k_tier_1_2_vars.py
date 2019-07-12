@@ -1,9 +1,6 @@
+#!/usr/bin/env python3
 """
 v1.0 - AB 2019/05/30
-Requirements:
-    Python 3.7
-    JellyPy
-    GeL Report Models (v6 or higher)
 
 usage: 100k_tier_1_2_vars.py [-h] -i IR_ID -p PROBAND_ID
 
@@ -33,6 +30,7 @@ from protocols.reports_6_0_0 import InterpretedGenome
 
 config = ConfigParser()
 config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.ini"))
+
 
 def process_arguments():
     """
@@ -165,7 +163,10 @@ def get_ir_json(ir_id, ir_version):
     For speed this function will use a local cached json rather than downloading a fresh copy, provided
     the last_modified timestamp matches that found in the interpretation request list endpoint
     Args:
-
+        ir_id: 100KGP interpretation request id without cip prefix or version suffix e.g. 12345 for case SAP-12345-1
+        ir_version: 100KGP interpretation request version e.g. 1 for case SAP-12345-1
+    Returns:
+        interpretation request as python dictionary-like json object
     """
     # Get list of local JSON file names (pulled using GeL2MDT)
     local_jsons = ';'.join(glob.glob('{local_cache}/{ir_id}-{ir_version}-*.json'.format(
@@ -210,6 +211,8 @@ def main():
     args = process_arguments()
     # Pull out interpretation request JSON
     ir_json = get_ir_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1])
+    # Capture the genome assembly
+    assembly = ir_json['assembly']
     # Group variants by tier
     tiered_vars = get_tiered_vars(ir_json)
     # Loop through tier 1 and tier 2 variants
@@ -221,9 +224,11 @@ def main():
                 # Capture proband genotype and convert to VCF format
                 gt = zygosity_to_vcf(variant_call.zygosity)
         # The other details needed are stored in 'variantCoordinates'
+        # (Note that whilst assembly is also recorded in variantCoordinates, it can be incorrect!
+        # GeL advised to always capture the assembly from the top level of the JSON as done above)
         # Print variant details in tab separated list to stdout
         vc = var.variantCoordinates
-        print(f"{vc.assembly}\t{vc.chromosome}\t{vc.position}\t{vc.reference}\t{vc.alternate}\t{gt}")
+        print(f"{assembly}\t{vc.chromosome}\t{vc.position}\t{vc.reference}\t{vc.alternate}\t{gt}")
 
 if __name__ == '__main__':
     main()
