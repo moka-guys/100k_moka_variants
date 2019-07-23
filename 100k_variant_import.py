@@ -507,16 +507,13 @@ def main():
     failed = []
     # Return arguments
     args = process_arguments()
-    print "Retrieving tier 1 and 2 variants from GeL (this may be slow)"
     # Get tier 1/2 variants
     variants = get_tier_1_2_vars(args.ir_id, args.proband_id)
     # If there aren't any variants returned, display message and exit
     if not variants:
-        print "Done"
         message_box("No tier 1 or 2 variants found for 100KGP case {ir_id}".format(ir_id=args.ir_id), 'info')
         return
     # For each variant, get variant details. If anything goes wrong, record in failed list.
-    print 'Getting variant details from VariantValidator'
     for variant in variants:
         try:
             variants_annotated.append(get_additional_info(variant))
@@ -528,11 +525,9 @@ def main():
         var_val_version = variants_annotated[0]['var_val_version']
     # Insert each annotated variant to Moka
     mc = MokaConnector()
-    print 'Inserting variants to Moka'
     imported, skipped, no_hgncid = add_to_moka(variants_annotated, args.ngstest_id, args.internal_pat_id, mc)
     # Record in patient log.
     patient_log(args.internal_pat_id, args.ir_id, var_val_version, len(imported), len(failed), len(skipped), mc)
-    print "Done"
     # Report any skipped/failed imports
     summary_messages(skipped, failed, no_hgncid)
 
