@@ -14,14 +14,8 @@ optional arguments:
                         GeL participant ID for proband
 """
 
-from configparser import ConfigParser
-import os
 import sys
 import argparse
-import glob
-import re
-import json
-import datetime
 # Append JellyPy to python path, needed when running via paramiko from Windows
 sys.path.append('/home/mokaguys/Apps/JellyPy')
 from pyCIPAPI.interpretation_requests import get_interpretation_request_list, get_interpretation_request_json
