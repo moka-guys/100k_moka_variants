@@ -28,10 +28,6 @@ from pyCIPAPI.interpretation_requests import get_interpretation_request_list, ge
 # Import InterpretedGenome from GeLReportModels v6.0
 from protocols.reports_6_0_0 import InterpretedGenome
 
-config = ConfigParser()
-config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.ini"))
-
-
 def process_arguments():
     """
     Uses argparse module to define and handle command line input arguments and help menu
