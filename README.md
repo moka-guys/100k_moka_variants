@@ -1,7 +1,7 @@
-# 100k_moka_variants v1.0
+# 100k_moka_variants v1.1
 ## 100k_tier_1_2_vars.py 
 
-This script pulls out all tier 1 and 2 variants from the CIP-API for a 100k case. For speed, the script will use a local cached copy of the JSON (as downloaded by GeL2MDT) when one is available and the `last_modified` timestamp matches that in the CIP-API interpretation request list endpoint.
+This script pulls out all tier 1 and 2 variants from the CIP-API for a 100k case.
 
 The variant details are printed to stdout in a tab separated format with the following columns:
 
@@ -23,7 +23,6 @@ Requirements:
 * JellyPy (in PYTHONPATH)
 * GelReportModels (v6 or higher)
 
-The path to the local cache of JSON files stored by GeL2MDT must be specified in a file named `config.ini` in the same directory of the script. See `example_config.ini` for format.
 
 On `SV-TE-GENAPP01` activate the `jellypy_py3` conda environment so that above requirements are met:
 
