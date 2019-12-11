@@ -157,60 +157,11 @@ def zygosity_to_vcf(gel_zygosity):
     return vcf_lookup[gel_zygosity]
 
 
-def get_ir_json(ir_id, ir_version):
-    """
-    Get the interpretation request JSON for a case and return as a python json dictionary like object
-    For speed this function will use a local cached json rather than downloading a fresh copy, provided
-    the last_modified timestamp matches that found in the interpretation request list endpoint
-    Args:
-        ir_id: 100KGP interpretation request id without cip prefix or version suffix e.g. 12345 for case SAP-12345-1
-        ir_version: 100KGP interpretation request version e.g. 1 for case SAP-12345-1
-    Returns:
-        interpretation request as python dictionary-like json object
-    """
-    # Get list of local JSON file names (pulled using GeL2MDT)
-    local_jsons = ';'.join(glob.glob('{local_cache}/{ir_id}-{ir_version}-*.json'.format(
-            local_cache=config.get("GEL2MDT", "CIP-API-CACHE"),
-            ir_id=ir_id,
-            ir_version=ir_version
-        )
-    ))
-    # GeL2MDT appends sequential version numbers to the end of the JSON each time a new copy is downloaded
-    # Capture the GeL2MDT version number from end of each JSON file name to find latest file
-    versions = re.findall(r'{ir_id}-{ir_version}-(\d+).json'.format(ir_id=ir_id, ir_version=ir_version), local_jsons)
-    # If there's no local cache files, or filenames don't match expected format, versions will be an empty list so skip next block
-    if versions:
-        # Find highest version and construct filepath
-        max_version = max(list(map(int, versions)))
-        latest_cache_path = '{local_cache}/{ir_id}-{ir_version}-{max_version}.json'.format(
-                local_cache=config.get("GEL2MDT", "CIP-API-CACHE"),
-                ir_id=ir_id,
-                ir_version=ir_version,
-                max_version=max_version
-            )
-        # Read into a JSON object
-        with open(latest_cache_path, 'r') as cache_json:
-            ir_json = json.load(cache_json)
-        # Get overview of case from interpretation request list endpoint (this is much faster than pulling the full JSON)
-        ir_list = get_interpretation_request_list(interpretation_request_id=ir_id, version=ir_version)
-        # Check that this only returns one result
-        if len(ir_list) != 1:
-            sys.exit(f"Length of interpretation request list was {list_length} which is different to expected length 1".format(list_length=len(ir_list)))
-        # Get the last modified timestamp from cip api and local cache and convert to datetime objects
-        last_modified_api = datetime.datetime.strptime(ir_list[0]['last_modified'], "%Y-%m-%dT%H:%M:%S.%fZ")
-        last_modified_cache = datetime.datetime.strptime(ir_json['last_modified'], "%Y-%m-%dT%H:%M:%S.%fZ")
-        # Check if they match. If they do, return the local cache JSON.
-        if last_modified_api == last_modified_cache:
-            return ir_json
-    # If there is no local cache, or it's out of date, download a new JSON from CIP-API and return
-    return get_interpretation_request_json(ir_id, ir_version, reports_v6=True)
-
-
 def main():
     # Return arguments
     args = process_arguments()
     # Pull out interpretation request JSON
-    ir_json = get_ir_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1])
+    ir_json = get_interpretation_request_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1], reports_v6=True)
     # Capture the genome assembly
     assembly = ir_json['assembly']
     # Group variants by tier
