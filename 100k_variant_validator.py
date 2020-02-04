@@ -17,10 +17,15 @@ optional arguments:
   -a ALT, --alt ALT     Alternate base(s)
 """
 
+import os
 import sys
 import argparse
 import requests
+from configparser import ConfigParser
 
+# Read config file (must be called config.ini and stored in same directory as script)
+config = ConfigParser()
+config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.ini"))
 
 def process_arguments():
     """
@@ -172,7 +177,7 @@ class Variant(object):
             ref: Reference bases(s)
             alt: Alternate base(s)
         """
-        endpoint = f'https://rest.variantvalidator.org/variantvalidator/{build}/{chr}-{pos}-{ref}-{alt}/all'
+        endpoint = f'{config.get("VariantValidator", "BASE_URL")}/{build}/{chr}-{pos}-{ref}-{alt}/all'
         r = requests.get(endpoint)
         # Error if response code not 200
         if r.status_code != 200:

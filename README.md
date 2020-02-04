@@ -1,4 +1,4 @@
-# 100k_moka_variants v1.1
+# 100k_moka_variants v1.2
 ## 100k_tier_1_2_vars.py 
 
 This script pulls out all tier 1 and 2 variants from the CIP-API for a 100k case.
