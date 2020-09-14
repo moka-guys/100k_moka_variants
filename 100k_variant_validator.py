@@ -218,7 +218,7 @@ def main():
     filename = datetime.datetime.now()
     datetime_stamp = filename.strftime("%y%m%d_%H%M%S")
     #Save stdout to logfile 
-    sys.stdout = open('/home/mokaguys/Apps/100k_moka_variants/variant_validator/%s_variantvalidator.tsv' % datetime_stamp, 'w')
+    sys.stdout = open('/home/mokaguys/Apps/100k_moka_variants/logfiles/variant_validator/%s_variantvalidator.tsv' % datetime_stamp, 'w')
     print(f"{v.chr37}\t{v.pos37}\t{v.ref37}\t{v.alt37}\t{v.chr38}\t{v.pos38}\t{v.ref38}\t{v.alt38}\t{','.join(tx_strs)}\t{v.var_val_version}")
 
 

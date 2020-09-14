@@ -530,8 +530,11 @@ def main():
     patient_log(args.internal_pat_id, args.ir_id, var_val_version, len(imported), len(failed), len(skipped), mc)
     # Report any skipped/failed imports
     summary_messages(skipped, failed, no_hgncid)
-    #Save details of imported variants in logfile 
-    with open('/home/mokaguys/Apps/100k_moka_variants/variant_validator/%s_mokaimport.tsv, 'w') as file_obj:
+    #Get datetime stamp
+    filename = datetime.datetime.now() 
+    datetime_stamp = filename.strftime("%y%m%d_%H%M%S")
+    #Save details of imported variants in logfile
+    with open('/home/mokaguys/Apps/100k_moka_variants/log_files/moka_import/%s_mokaimport.tsv' % datetime_stamp, 'w') as file_obj:
         file_obj.write(f"{imported}\t{skipped}\t{no_hgncid}\n")
 
 

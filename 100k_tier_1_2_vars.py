@@ -152,7 +152,11 @@ def main():
     args = process_arguments()
     # Pull out interpretation request JSON
     ir_json = get_interpretation_request_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1], reports_v6=True)
-    with open({ir_id}"_json.csv", "w") as file_obj:
+    #get datetime stamp
+    filename = datetime.datetime.now() 
+    datetime_stamp = filename.strftime("%y%m%d_%H%M%S")
+    #Save ir json to a logfile 
+    with open('/home/mokaguys/Apps/100k_moka_variants/logfiles/ir_json/%s_IR.json' % datetime_stamp, "w") as file_obj:
         file_obj.write(ir_json)
     # Capture the genome assembly
     assembly = ir_json['assembly']
