@@ -152,6 +152,8 @@ def main():
     args = process_arguments()
     # Pull out interpretation request JSON
     ir_json = get_interpretation_request_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1], reports_v6=True)
+    with open({ir_id}"_json.csv", "w") as file_obj:
+        file_obj.write(ir_json)
     # Capture the genome assembly
     assembly = ir_json['assembly']
     # Group variants by tier
