@@ -534,7 +534,7 @@ def main():
     filename = datetime.datetime.now() 
     datetime_stamp = filename.strftime("%y%m%d_%H%M%S")
     #Save details of imported variants in logfile
-    with open('/home/mokaguys/Apps/100k_moka_variants/log_files/moka_import/%s_mokaimport.tsv' % datetime_stamp, 'w') as file_obj:
+    with open('/home/mokaguys/Documents/100k_moka_variants_logfiles/moka_import/%s_mokaimport.tsv' % datetime_stamp, 'w') as file_obj:
         file_obj.write(f"{imported}\t{skipped}\t{no_hgncid}\n")
 
 

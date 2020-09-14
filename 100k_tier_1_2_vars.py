@@ -156,7 +156,7 @@ def main():
     filename = datetime.datetime.now() 
     datetime_stamp = filename.strftime("%y%m%d_%H%M%S")
     #Save ir json to a logfile 
-    with open('/home/mokaguys/Apps/100k_moka_variants/logfiles/ir_json/%s_IR.json' % datetime_stamp, "w") as file_obj:
+    with open('/home/mokaguys/Documents/100k_moka_variants_logfiles/ir_json/%s_IR.json' % datetime_stamp, "w") as file_obj:
         file_obj.write(ir_json)
     # Capture the genome assembly
     assembly = ir_json['assembly']
