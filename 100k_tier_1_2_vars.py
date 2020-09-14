@@ -16,6 +16,7 @@ optional arguments:
 
 import sys
 import argparse
+import datetime
 # Append JellyPy to python path, needed when running via paramiko from Windows
 sys.path.append('/home/mokaguys/Apps/JellyPy')
 from pyCIPAPI.interpretation_requests import get_interpretation_request_list, get_interpretation_request_json
@@ -152,12 +153,6 @@ def main():
     args = process_arguments()
     # Pull out interpretation request JSON
     ir_json = get_interpretation_request_json(args.ir_id.split('-')[0], args.ir_id.split('-')[1], reports_v6=True)
-    #get datetime stamp
-    filename = datetime.datetime.now() 
-    datetime_stamp = filename.strftime("%y%m%d_%H%M%S")
-    #Save ir json to a logfile 
-    with open('/home/mokaguys/Documents/100k_moka_variants_logfiles/ir_json/%s_IR.json' % datetime_stamp, "w") as file_obj:
-        file_obj.write(ir_json)
     # Capture the genome assembly
     assembly = ir_json['assembly']
     # Group variants by tier
@@ -175,6 +170,11 @@ def main():
         # GeL advised to always capture the assembly from the top level of the JSON as done above)
         # Print variant details in tab separated list to stdout
         vc = var.variantCoordinates
+        #get datetime stamp
+        filename = datetime.datetime.now() 
+        datetime_stamp = filename.strftime("%y%m%d_%H%M%S")
+        #Save stdout to a logfile
+        sys.stdout = open('/home/mokaguys/Documents/100k_moka_variants_logfiles/tier1_2_var/%s_tier1_2_var.tsv' % datetime_stamp, 'w')
         print(f"{assembly}\t{vc.chromosome}\t{vc.position}\t{vc.reference}\t{vc.alternate}\t{gt}")
 
 if __name__ == '__main__':
