@@ -213,6 +213,11 @@ def main():
     tx_strs = [f"{tx['gene']};{tx['transcript']};{tx['hgvst']};{tx['hgvsp']}" for tx in v.transcripts]
     # Print the transcript info to stdout as a tab-separated string
     # Transcript strings are joined using commas and printed in the final field
+    #Get datetime stamp to add to logifle name
+    filename = datetime.datetime.now()
+    datetime = filename.strftime("%y%m%d_%H%M%S")
+    #Save stdout to logfile 
+    sys.stdout = open('/home/mokaguys/Apps/100k_moka_variants/variant_validator/%s_variantvalidator.tsv' % datetime, 'w')
     print(f"{v.chr37}\t{v.pos37}\t{v.ref37}\t{v.alt37}\t{v.chr38}\t{v.pos38}\t{v.ref38}\t{v.alt38}\t{','.join(tx_strs)}\t{v.var_val_version}")
 
 
